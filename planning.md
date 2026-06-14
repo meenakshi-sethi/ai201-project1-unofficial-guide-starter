@@ -35,71 +35,93 @@ Student experience at John Jay College of Criminal Justice (CUNY) — clubs, res
 
 ## Chunking Strategy
 
-<!-- How will you split documents into chunks?
-     State your chunk size (in tokens or characters), overlap size, and explain why those
-     numbers fit the structure of your documents.
-     A review-heavy corpus warrants different chunking than a long FAQ. -->
+**Chunk size:** 300 characters
 
-**Chunk size:**
+**Overlap:** 50 characters
 
-**Overlap:**
+**Reasoning:** I'm using recursive character splitting. After skimming the documents, most content is short — club descriptions, FAQ pairs, Reddit comments all run about 150-300 characters. Recursive splitting tries to break at paragraph → sentence → word boundaries in that order, so it handles the mixed content without me having to treat each document differently. 300 chars keeps one entry per chunk. Fixed-size was the other option but it would cut mid-sentence on FAQ pairs which would make those chunks useless for retrieval.
 
-**Reasoning:**
+**Short reviews vs long guides:** Almost everything here is short. 300 chars fits one entry cleanly. The one exception is document 08 (Reddit first day) which has longer comments — recursive handles those by splitting at sentence breaks.
+
+**What overlap helps with:** If a key fact gets cut at the boundary (like eligibility and award amount in the same sentence), 50 chars of overlap means that sentence shows up in both chunks. I kept it at 50 and not higher because most entries stand on their own — more overlap would just repeat content.
+
+**Too small vs too large:** If chunks were under 150, Q&A pairs would split across two chunks and neither would make sense alone. If chunks were over 600, unrelated entries would get merged and retrieval would return chunks about multiple topics at once.
+
+**Queries this might fail for:** Questions that need info from multiple entries at once — like "compare all honors programs" — since each program is its own 300-char chunk and top-k retrieval might not surface all of them. Same problem for broad opinion questions like "what do students think overall" that need many Reddit chunks to answer well.
 
 ---
 
 ## Retrieval Approach
 
-<!-- Which embedding model are you using (e.g., all-MiniLM-L6-v2 via sentence-transformers)?
-     How many chunks will you retrieve per query (top-k)?
-     If you were deploying this for real users and cost wasn't a constraint, what tradeoffs
-     would you weigh in choosing a different embedding model — context length, multilingual
-     support, accuracy on domain-specific text, latency? -->
+**Embedding model:** `all-MiniLM-L6-v2` via sentence-transformers
 
-**Embedding model:**
+**Top-k:** 3
 
-**Top-k:**
+**Why this model:** Runs locally, no API key needed, no rate limits. The corpus is small and the content is general enough that a larger model like `text-embedding-3-large` wouldn't add much. Its 256-token context window also fits cleanly within the 300-char chunks I'm using.
 
-**Production tradeoff reflection:**
+**Why top-k 3:** The entries are short and focused. 3 chunks is enough context for the LLM to answer most questions here. Going higher would pull in unrelated chunks given how small the dataset is.
+
+**Why semantic search works without exact word match:** The model turns text into a vector based on meaning, not exact words. So "what clubs can I join" still finds chunks about "student organizations" because both mean the same thing to the model.
+
+**Production tradeoff reflection:** With no cost constraint I'd look at `text-embedding-3-large` for better accuracy, or `multilingual-e5-large` since nearly half of John Jay students are Hispanic — multilingual support could help with non-English queries. But for a small local project, both are overkill and add API costs and latency that aren't worth it here.
 
 ---
 
 ## Evaluation Plan
 
-<!-- List your 5 test questions with their expected correct answers.
-     Questions should be specific enough that you can judge whether the system's response
-     is right or wrong. "What are good dining halls?" is too vague.
-     "What do students say about wait times at [dining hall name] during lunch?" is testable. -->
-
 | # | Question | Expected answer |
 |---|----------|-----------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
+| 1 | What is the total student enrollment at John Jay College as of Fall 2023? | 13,465 total students (11,656 undergraduates, 1,809 graduates) — from Quick Facts 2023 PDF |
+| 2 | What is the 6-year graduation rate at John Jay? | 55.5% for the entering class of Fall 2017 — from Quick Facts 2023 PDF (official). Data USA reports 54% 6-year completion and 55.8% overall graduation rate (slight difference due to different methodology/year) |
+| 3 | Who is eligible for the Federal Work-Study program at John Jay? | Must be a US citizen or eligible non-citizen, complete the FAFSA and check the FWS box, awarded first-come first-served. International students and entering freshmen (until their first semester begins) are not eligible — from Federal Work-Study FAQ |
+| 4 | What is the PRISM program at John Jay? | PRISM is a STEM undergraduate research program. Over 800 undergrads have participated. It includes a Transfer Together Program for students transferring from CUNY community colleges — from PRISM page |
+| 5 | What do Reddit users say about transferring to John Jay? | Transfer students mention transferring from CUNY community colleges (BCC, BMCC), using the ASAP program, and a student-run Discord with 100+ transfer and freshman students — from Reddit threads 06, 07, 08 |
 
 ---
 
 ## Anticipated Challenges
 
-<!-- What could go wrong? Name at least two specific risks with reasoning.
-     Consider: noisy or inconsistent documents, missing source attribution, off-topic
-     retrieval, chunks that split key information across boundaries. -->
+1. **Chunk size too large for thin documents** — Sources 12 (Career Building) and 05 (Quick Facts) are only ~1,500–1,700 chars total. At 300 chars per chunk, each produces only 4–5 chunks. If a question targets those topics, retrieval has almost nothing to choose from and may return off-topic chunks instead.
 
-1.
+2. **Broad queries will fail retrieval** — top-k=3 only surfaces 3 chunks per query. Questions that need information from multiple entries (e.g. "what opportunities are available at John Jay?") will get an incomplete answer because the pipeline can't retrieve enough context in one pass.
 
-2.
+3. **Same stat appearing in multiple sources** — Graduation rates appear in Quick Facts (55.5%), Data USA (54%), and College Factual with slightly different numbers. The system may retrieve chunks from all three, and the LLM could produce a confused or averaged answer without knowing which source to trust.
+
+4. **Reddit PDF extraction noise** — Chrome print-to-PDF captures UI elements (vote counts, timestamps, "Share"/"Reply" buttons). pdfplumber extracts all of it alongside the actual comment text. This noise could affect embedding quality and retrieval for Reddit-based questions.
+
+5. **Semantic embedding as a strength for Reddit** — Reddit comments use informal, conversational language. Semantic embeddings handle this well since the model encodes meaning rather than matching exact words. A query like "is John Jay worth going to" will find relevant Reddit chunks even when the comments don't use those exact words.
 
 ---
 
 ## Architecture
 
-<!-- Draw a diagram of your pipeline showing the five stages:
-     Document Ingestion → Chunking → Embedding + Vector Store → Retrieval → Generation
-     Label each stage with the tool or library you're using.
-     You can use ASCII art, a Mermaid diagram, or embed a sketch as an image.
-     You'll use this diagram as context when prompting AI tools to implement each stage. -->
+```
+documents/ (.txt files)
+        |
+        v
+[ Document Ingestion ]
+  requests + BeautifulSoup + pdfplumber
+        |
+        v
+[ Chunking ]
+  Recursive character split — 300 chars, 50 overlap
+        |
+        v
+[ Embedding + Vector Store ]
+  sentence-transformers (all-MiniLM-L6-v2) → ChromaDB
+        |
+        v
+[ Retrieval ]
+  ChromaDB similarity search — top-k 3
+        |
+        v
+[ Generation ]
+  Groq (llama-3.3-70b-versatile)
+        |
+        v
+[ UI ]
+  Gradio
+```
 
 ---
 
@@ -116,7 +138,10 @@ Student experience at John Jay College of Criminal Justice (CUNY) — clubs, res
      with my specified chunk size and overlap" is a plan. -->
 
 **Milestone 3 — Ingestion and chunking:**
+I gave Claude the Documents table and Chunking Strategy section from planning.md and asked it to build `collect_documents.py`. It produced a scraper with helper functions. I verified by checking all 13 files were saved to `documents/` and spot-checking that the Reddit PDFs had real comment text extracted, not just headers.
 
 **Milestone 4 — Embedding and retrieval:**
+I will give Claude the Retrieval Approach section (model: all-MiniLM-L6-v2, top-k: 3, vector store: ChromaDB) and ask it to implement the embed and query functions. I will verify by running all 5 evaluation questions from the Evaluation Plan and checking that the retrieved chunks contain the expected answers.
 
 **Milestone 5 — Generation and interface:**
+I will give Claude the Architecture diagram and ask it to wire Groq (llama-3.3-70b-versatile) to the retrieval output and build a Gradio UI with a text input and answer display. I will verify by asking one test question end-to-end and confirming the response is grounded in the retrieved chunks, not hallucinated.
