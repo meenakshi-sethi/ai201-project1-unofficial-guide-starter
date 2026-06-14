@@ -24,8 +24,8 @@ Chunk size 300 keeps each entry as its own chunk. Overlap of 50 (up from an init
 **Embedding model: `all-MiniLM-L6-v2`**
 Runs locally, no API key, no rate limits. The corpus is small and content is general — no need for a large domain-specific model. Its 256-token context window fits the 300-char chunks without truncation. Alternatives like `text-embedding-3-large` would improve accuracy but add API cost and latency not justified for this project size.
 
-**Top-k: 3**
-Entries are short and self-contained. 3 chunks gives enough context (~900 chars) for most questions. Going higher risks pulling in off-topic chunks given how small the dataset is. Risk noted: broad opinion questions may need more Reddit chunks than 3 — will verify during evaluation in Milestone 4.
+**Top-k: 4**
+Changed from 3 to 4 before Milestone 4 based on project instructions recommending to start at k=4 or k=5 to ensure relevant content is in the retrieved set. 4 chunks gives ~950 chars of context which is still focused. Will tune down to 3 if retrieval pulls in off-topic chunks during evaluation.
 
 **Why semantic embedding works well for Reddit content**
 Reddit comments use informal conversational language. Semantic embeddings handle this well since the model encodes meaning rather than matching exact words. A query like "is John Jay worth going to" will find relevant Reddit chunks even when comments don't use those exact words.
@@ -49,6 +49,55 @@ This is standard in production RAG — LangChain's `RecursiveCharacterTextSplitt
 - Before fix: 690 chunks — SOURCE URL was eating into chunk space, and hard character overlap occasionally created extra chunk boundaries
 - After fix: 674 chunks — 16 fewer chunks because snapping to the next word boundary makes each overlap slightly shorter, so each chunk absorbs a bit more content per boundary
 - Both counts are within the required 50–2,000 range
+
+---
+
+## Further Enhancements (Post-Submission)
+
+Three retrieval failures were identified during Milestone 4 testing. The fixes are either stretch goals or advanced techniques — keeping them here for after submission:
+
+- **Hybrid Search (BM25 + semantic)** — would fix Query 1 (enrollment). Keyword matching finds "total student enrollment: 13,465" instantly where semantic search fails on dense stat chunks. This is the +2pt stretch goal in the grading rubric.
+- **Parent document retrieval** — would fix Query 3 (FWS eligibility). Keeps Q+A pairs together by retrieving the parent chunk when a child chunk matches, so the eligibility question and criteria stay in the same context.
+- **Query decomposition** — would fix Query 5 (Reddit transfer). Breaks "what do Reddit users say about transferring" into focused sub-queries like "transfer experience John Jay" that match individual comment chunks better.
+
+---
+
+## Milestone 4 — Retrieval Testing Results
+
+After building the ChromaDB index and running all 5 evaluation queries, here's what retrieval found:
+
+**Query 2 (6-year graduation rate)** — distances 0.39–0.47, all 4 results from `10_college_factual_graduation.txt`. Top chunk explicitly states the 46% six-year rate. Strong retrieval.
+
+**Query 4 (PRISM program)** — distances 0.51–0.75, results from `02_prism_research.txt` and `03_honors_programs.txt`. Both correct sources. Relevant student quotes and program description returned.
+
+**Query 1 (total enrollment)** — distances 0.59–0.72, none of the top 4 results came from `05_quick_facts_2023.txt` where the answer lives. The Quick Facts PDF chunks are dense with numbers and `■` bullets — the embedding model doesn't find a strong semantic match between "student enrollment" and that noisy chunk layout.
+
+**Query 3 (FWS eligibility)** — top result from `04_scholarships.txt` (wrong doc, distance 0.76). Chunks 2–4 from the correct FWS doc but distances 0.83–0.86, indicating weak semantic match. FAQ-style text with short answers doesn't embed as cleanly as prose.
+
+**Query 5 (Reddit transfer)** — distances 0.82–0.90, results from College Factual and PRISM instead of Reddit. Also found surviving ads in Reddit chunks (QuickBooks and Shopify) that don't contain the word "Promoted" so the cleaner missed them.
+
+**Chunk size experiment:**
+Tested chunk sizes 300, 350, 400, 450, 500 to see if larger chunks improve retrieval distances. Results showed no chunk size yields 3 queries below the 0.5 distance threshold. Q2 (graduation rate) stays below 0.5 at all sizes. Q1 (enrollment) gets worse with larger chunks. Q5 (Reddit) gets much worse. 300 chars remains the best overall — kept as the final chunk size.
+
+| Chunk size | Q1 enrollment | Q2 graduation | Q3 FWS | Q4 PRISM | Q5 Reddit |
+|------------|---------------|---------------|--------|----------|-----------|
+| 300 | 0.5961 | **0.3908** | 0.7599 | 0.5103 | 0.8282 |
+| 350 | 0.7089 | 0.4797 | 0.8252 | 0.5103 | 0.8282 |
+| 400 | 0.7473 | 0.4526 | 0.8252 | 0.5103 | 0.8769 |
+| 450 | 0.7326 | 0.4473 | 0.7062 | 0.5054 | 0.8581 |
+| 500 | 0.7283 | 0.4829 | 0.6936 | 0.5345 | 0.9833 |
+
+Root causes for the 3 failing queries are semantic, not chunking-related — documented in Further Enhancements above.
+
+**Fixes applied after retrieval testing:**
+
+**Ad body lines slipping through cleaner**
+Each Reddit ad block has 2–3 lines after the "Promoted" marker: the ad body text and a CTA line (e.g. "Download databricks.com", "Shop Now quickbooks.intuit.com"). The existing "Promoted" filter only removed the header line. Fixed two ways: skip the 2 lines immediately after any "Promoted" line using a counter, and add a regex to catch CTA lines that match the pattern "Action domain.tld" for any that fall outside the 2-line window. Result: 0 ad chunks remaining.
+
+**`■` and `Â` encoding artifacts**
+Quick Facts PDF chunks contained `■` bullet characters from PDF layout. College Factual chunks had `Â` from a UTF-8/HTML encoding mismatch. Both added noise to chunk text that hurt embedding quality. Fixed by stripping both characters in `clean_text` after the line loop. Result: 0 noise chunks remaining.
+
+**Chunk count after all cleaning fixes: 765** (down from 767 — 2 chunks removed by ad cleanup)
 
 ---
 

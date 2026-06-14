@@ -49,17 +49,19 @@ Student experience at John Jay College of Criminal Justice (CUNY) — clubs, res
 
 **Queries this might fail for:** Questions that need info from multiple entries at once — like "compare all honors programs" — since each program is its own 300-char chunk and top-k retrieval might not surface all of them. Same problem for broad opinion questions like "what do students think overall" that need many Reddit chunks to answer well.
 
+**Implementation note:** Overlap snaps to the nearest word boundary instead of cutting at exactly 50 chars. This prevents chunks from starting mid-word, which matters for source citations and hybrid keyword search. Overlap is slightly variable (~45–55 chars) as a result. This is standard behavior in production splitters like LangChain's RecursiveCharacterTextSplitter.
+
 ---
 
 ## Retrieval Approach
 
 **Embedding model:** `all-MiniLM-L6-v2` via sentence-transformers
 
-**Top-k:** 3
+**Top-k:** 4
 
 **Why this model:** Runs locally, no API key needed, no rate limits. The corpus is small and the content is general enough that a larger model like `text-embedding-3-large` wouldn't add much. Its 256-token context window also fits cleanly within the 300-char chunks I'm using.
 
-**Why top-k 3:** The entries are short and focused. 3 chunks is enough context for the LLM to answer most questions here. Going higher would pull in unrelated chunks given how small the dataset is.
+**Why top-k 4:** Starting at 4 so relevant content is more likely to be in the retrieved set. Entries are short so 4 chunks is still focused context (~950 chars). Will tune down to 3 if retrieval starts pulling in off-topic chunks during evaluation.
 
 **Why semantic search works without exact word match:** The model turns text into a vector based on meaning, not exact words. So "what clubs can I join" still finds chunks about "student organizations" because both mean the same thing to the model.
 
@@ -127,21 +129,11 @@ documents/ (.txt files)
 
 ## AI Tool Plan
 
-<!-- For each part of the pipeline below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, which requirements)
-     - What you expect it to produce
-     - How you'll verify the output matches your spec
-
-     "I'll use AI to help me code" is not a plan.
-     "I'll give Claude my Chunking Strategy section and ask it to implement chunk_text()
-     with my specified chunk size and overlap" is a plan. -->
-
 **Milestone 3 — Ingestion and chunking:**
-I gave Claude the Documents table and Chunking Strategy section from planning.md and asked it to build `collect_documents.py`. It produced a scraper with helper functions. I verified by checking all 13 files were saved to `documents/` and spot-checking that the Reddit PDFs had real comment text extracted, not just headers.
+I gave Claude the Chunking Strategy section from planning.md and asked it to build `ingest.py` with three stages: load all `.txt` files from `documents/`, clean Reddit and web boilerplate, and split into chunks using recursive character splitting at 300 chars with 50-char overlap. It produced `load_documents`, `clean_text`, and `chunk_text` functions. I reviewed the output, found two bugs — overlap text combined with a large part silently exceeded 300 chars, and an oversized chunk at the end of the loop was appended without re-splitting — and directed both fixes. I also caught "Image" artifacts from scraped img tags and added them to the boilerplate list. Final result: 767 chunks across 13 documents, all ≤ 300 chars.
 
 **Milestone 4 — Embedding and retrieval:**
-I will give Claude the Retrieval Approach section (model: all-MiniLM-L6-v2, top-k: 3, vector store: ChromaDB) and ask it to implement the embed and query functions. I will verify by running all 5 evaluation questions from the Evaluation Plan and checking that the retrieved chunks contain the expected answers.
+I gave Claude the Retrieval Approach section from planning.md (model: all-MiniLM-L6-v2, top-k: 4, vector store: ChromaDB) and the architecture diagram and asked it to build `embed.py` with an embedding function and a retrieve function. I verified by running all 5 evaluation queries and checking distance scores and returned sources. 2 of 5 queries returned relevant chunks with low distances (Q2 graduation rate: 0.39, Q4 PRISM: 0.51). The 3 failing queries had documented root causes — dense PDF stats, FAQ chunking splits, and meta-query limitations. I also ran a chunk size experiment (300–500 chars) and confirmed 300 remains best overall.
 
 **Milestone 5 — Generation and interface:**
 I will give Claude the Architecture diagram and ask it to wire Groq (llama-3.3-70b-versatile) to the retrieval output and build a Gradio UI with a text input and answer display. I will verify by asking one test question end-to-end and confirming the response is grounded in the retrieved chunks, not hallucinated.
