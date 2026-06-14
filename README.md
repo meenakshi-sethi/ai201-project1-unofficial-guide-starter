@@ -46,6 +46,32 @@ I used recursive character splitting instead of fixed-size. The difference: fixe
 
 **Final chunk count:** 765 chunks across 13 documents
 
+---
+
+## Chunking Strategy Comparison
+
+During Milestone 4 retrieval testing, I ran the same 5 evaluation queries against chunk sizes 300, 350, 400, 450, and 500 to see whether larger chunks improved retrieval distances. Results below show top-1 distance per query (lower = better match):
+
+| Query | 300 chars | 400 chars | 500 chars |
+|-------|-----------|-----------|-----------|
+| Q1 — total enrollment | 0.5961 | 0.7473 | 0.7283 |
+| Q2 — 6-year graduation rate | **0.3908** | **0.4526** | **0.4829** |
+| Q3 — FWS eligibility | 0.7599 (wrong source) | 0.8252 (wrong source) | 0.6936 (right source) |
+| Q4 — PRISM program | 0.5103 | 0.5103 | 0.5345 |
+| Q5 — Reddit transfer opinions | 0.8282 | 0.8769 | 0.9833 |
+
+**Which strategy performed better and why:**
+
+300 chars wins overall. Q2 and Q4 both get their best distances at 300. Q1 (enrollment) and Q5 (Reddit) get progressively worse as chunk size increases — larger chunks merge unrelated stats or multiple short Reddit comments into one embedding, which dilutes the semantic signal.
+
+500 chars helps Q3 (FWS eligibility) find the right source document, but the distance is still 0.69 — above the 0.5 threshold and not a meaningful improvement for generation quality.
+
+The one case where larger chunks would clearly help is Q3: the FAQ format splits the eligibility question from the answer across chunk boundaries. A 500-char chunk is more likely to keep them together. But this benefit for one query doesn't outweigh the degradation on Q1 and Q5.
+
+**Final decision:** 300 chars with 50-char overlap, recursive splitting. Best performance on 4 of 5 queries.
+
+---
+
 **Sample chunks:**
 
 **Chunk 1** — `01_student_organizations.txt` (chunk #10)
@@ -120,6 +146,40 @@ The top result is off-topic — it comes from the scholarships document, not the
 
 **Production tradeoff reflection:**
 For a real deployment I'd weigh a few things. First, context length — `all-MiniLM-L6-v2` handles 256 tokens, which is fine for 300-char chunks but would truncate longer documents. `text-embedding-3-large` from OpenAI supports 8,191 tokens, which matters if chunk size ever increases. Second, multilingual support — nearly half of John Jay students are Hispanic and a significant share are first-generation, so queries in Spanish are realistic. `multilingual-e5-large` handles this; `all-MiniLM-L6-v2` does not. Third, accuracy — larger models like `text-embedding-3-large` produce better semantic matches on domain-specific text, which would have helped with the retrieval failures I saw on factual lookup queries (Q1 enrollment) and FAQ-style documents (Q3 FWS). Fourth, latency and cost — API-hosted models add network round-trips and per-token costs that matter at scale. For this project, local and free was the right call. For production with real users, I'd test `text-embedding-3-large` first and fall back to a local model only if cost became a constraint.
+
+---
+
+## Metadata Filtering
+
+The `retrieve()` function accepts an optional `source_filter` parameter — a list of source filenames to restrict results to. Two presets are defined in `embed.py`: `REDDIT_SOURCES` (the 4 Reddit thread files) and `OFFICIAL_SOURCES` (the 9 official/third-party files).
+
+**Query:** "What do students think about John Jay College?"
+
+**No filter — all sources:**
+| Distance | Source | Chunk |
+|----------|--------|-------|
+| 0.5699 | `02_prism_research.txt` | nothing but great things to say about the College. That gave me the green light to go for what I want |
+| 0.5886 | `02_prism_research.txt` | What advice do you have for incoming John Jay students? |
+| 0.6007 | `02_prism_research.txt` | I initially wanted to work in law enforcement, so John Jay was always on my radar... |
+| 0.6594 | `06_reddit_is_jjay_good.txt` | 87 lol not that good. I personally... |
+
+**Reddit sources only (`source_filter=REDDIT_SOURCES`):**
+| Distance | Source | Chunk |
+|----------|--------|-------|
+| 0.6594 | `06_reddit_is_jjay_good.txt` | 87 lol not that good. I personally... |
+| 0.7400 | `06_reddit_is_jjay_good.txt` | Is John Jay a good school? I recently got accepted into John Jay through on-site admissions... |
+| 0.7524 | `06_reddit_is_jjay_good.txt` | do so, but other than that it's decent. I started loving John Jay once I finally got done with my prereqs |
+| 0.9396 | `06_reddit_is_jjay_good.txt` | not bad. Wow! Thank you for giving me your experience... |
+
+**Official sources only (`source_filter=OFFICIAL_SOURCES`):**
+| Distance | Source | Chunk |
+|----------|--------|-------|
+| 0.5699 | `02_prism_research.txt` | nothing but great things to say about the College... |
+| 0.5886 | `02_prism_research.txt` | What advice do you have for incoming John Jay students? |
+| 0.6007 | `02_prism_research.txt` | I initially wanted to work in law enforcement, so John Jay was always on my radar... |
+| 0.6673 | `02_prism_research.txt` | Queensborough Community College before transferring to John Jay through the CUNY Justice Academy |
+
+The filter has a visible effect — Reddit-only returns raw student opinions from Reddit threads, while official-only returns institutional content and student testimonials from the PRISM page. A user who wants unfiltered student sentiment gets Reddit chunks; a user who wants verified institutional information gets official source chunks.
 
 ---
 

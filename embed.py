@@ -44,7 +44,27 @@ def build_collection(chunks):
     return collection, model
 
 
-def retrieve(query, collection, model, k=4):
+REDDIT_SOURCES = [
+    "06_reddit_is_jjay_good.txt",
+    "07_reddit_first_semester.txt",
+    "08_reddit_first_day.txt",
+    "09_reddit_graduates.txt",
+]
+
+OFFICIAL_SOURCES = [
+    "01_student_organizations.txt",
+    "02_prism_research.txt",
+    "03_honors_programs.txt",
+    "04_scholarships.txt",
+    "05_quick_facts_2023.txt",
+    "10_college_factual_graduation.txt",
+    "11_data_usa_jjay.txt",
+    "12_career_building.txt",
+    "13_federal_work_study.txt",
+]
+
+
+def retrieve(query, collection, model, k=4, source_filter=None):
     """Return the top-k most relevant chunks for a query.
 
     Args:
@@ -52,12 +72,20 @@ def retrieve(query, collection, model, k=4):
         collection: ChromaDB collection built by build_collection().
         model: SentenceTransformer model used to embed the query.
         k: number of chunks to return (default 4).
+        source_filter: optional list of source filenames to restrict results to.
+                       Use REDDIT_SOURCES or OFFICIAL_SOURCES, or any custom list.
 
     Returns:
         List of dicts with keys: text, source, source_url, chunk_index, distance.
     """
     query_embedding = model.encode([query]).tolist()
-    results = collection.query(query_embeddings=query_embedding, n_results=k)
+
+    where = {"source": {"$in": source_filter}} if source_filter else None
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=k,
+        where=where,
+    )
 
     chunks = []
     for i in range(len(results["documents"][0])):
@@ -92,3 +120,22 @@ if __name__ == "__main__":
         for r in results:
             print(f"  [{r['distance']}] ({r['source']}) {r['text'][:120]}")
         print()
+
+    # metadata filtering demo
+    print("=" * 60)
+    print("METADATA FILTERING DEMO")
+    print("=" * 60)
+    filter_query = "What do students think about John Jay College?"
+
+    print(f"\nQuery: {filter_query}")
+    print("\n--- No filter (all sources) ---")
+    for r in retrieve(filter_query, collection, model, k=4):
+        print(f"  [{r['distance']}] ({r['source']}) {r['text'][:100]}")
+
+    print("\n--- Reddit only ---")
+    for r in retrieve(filter_query, collection, model, k=4, source_filter=REDDIT_SOURCES):
+        print(f"  [{r['distance']}] ({r['source']}) {r['text'][:100]}")
+
+    print("\n--- Official sources only ---")
+    for r in retrieve(filter_query, collection, model, k=4, source_filter=OFFICIAL_SOURCES):
+        print(f"  [{r['distance']}] ({r['source']}) {r['text'][:100]}")

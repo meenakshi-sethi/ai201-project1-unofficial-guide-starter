@@ -40,8 +40,14 @@ def clean_text(text):
     """
     lines = text.splitlines()
     cleaned = []
+    skip_ad_lines = 0
     for line in lines:
         stripped = line.strip()
+
+        # skip ad body/CTA lines that follow a "Promoted" marker (2 lines per ad block)
+        if skip_ad_lines > 0:
+            skip_ad_lines -= 1
+            continue
 
         # skip known boilerplate phrases
         if stripped in (
@@ -56,8 +62,13 @@ def clean_text(text):
         ):
             continue
 
-        # fix 2: skip Reddit promoted ad lines (e.g. "Intuit_QuickBooks • Promoted ...")
+        # skip Reddit promoted ad lines and queue next 2 lines as ad body/CTA
         if "Promoted" in stripped:
+            skip_ad_lines = 2
+            continue
+
+        # skip ad CTA lines that slip past the counter (e.g. "Download databricks.com")
+        if re.fullmatch(r"(Download|Shop Now|Sign Up|Get Started|Learn More)\s+\S+\.\S+", stripped):
             continue
 
         # skip Reddit vote count lines (e.g. "82 19", "26 25")
@@ -85,6 +96,8 @@ def clean_text(text):
     # collapse multiple blank lines into one
     result = "\n".join(cleaned)
     result = re.sub(r"\n{3,}", "\n\n", result)
+    # remove PDF bullet characters and HTML encoding artifacts
+    result = result.replace("■", "").replace("Â", "")
     return result.strip()
 
 
