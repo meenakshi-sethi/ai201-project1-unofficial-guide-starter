@@ -9,27 +9,27 @@
 
 ## Domain
 
-<!-- What domain did you choose? Why is this knowledge valuable and hard to find through official channels? -->
+Student experience at John Jay College of Criminal Justice (CUNY) — clubs, research opportunities, scholarships, graduation rates, career outcomes, on-campus jobs, and what current and former students actually say about the school. Most of this information is spread across unrelated official pages or buried in Reddit threads, so there's no single place to go if you're a new or prospective student trying to understand what John Jay is really like.
 
 ---
 
 ## Documents
 
-<!-- List your specific sources: URLs, subreddit names, forum threads, or file descriptions.
-     Aim for at least 10 sources that together cover different subtopics or perspectives within your domain. -->
-
 | # | Source | Description | URL or location |
 |---|--------|-------------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
+| 1 | Student Organizations | Official list of 60+ clubs across 13 categories | https://www.jjay.cuny.edu/student-life/center-student-involvement-leadership/student-organizations |
+| 2 | PRISM Research Program | STEM undergrad research program — includes student stories and program stats | https://www.jjay.cuny.edu/research/student-research/program-research-initiatives-science-math |
+| 3 | Honors & Achievement Programs | 8 honors tracks with per-program descriptions | https://www.jjay.cuny.edu/academics/undergraduate-programs/honors-achievement-programs |
+| 4 | Research & Creativity Scholarships | Scholarship eligibility, award amounts, and application criteria | https://www.jjay.cuny.edu/research/student-research/office-student-research-creativity/research-creativity-scholarships/undergraduategraduate-researchcreativity-assistant-scholarship |
+| 5 | Quick Facts 2023 PDF | One-page factsheet: enrollment numbers, popular majors, student demographics | `documents/05_quick_facts_2023.txt` |
+| 6 | r/CUNY — "Is John Jay a good school?" | Reddit thread with student takes on school quality | https://reddit.com/r/CUNY/comments/1gwtc86 |
+| 7 | r/CUNY — "First Semester At John Jay" | Reddit thread about first-semester experiences | https://reddit.com/r/CUNY/comments/kj7zc4 |
+| 8 | r/CUNY — "First day tomorrow..." | Reddit thread about first-day impressions | https://reddit.com/r/CUNY/comments/1f2r9wf |
+| 9 | r/CUNY — "Any 5-10 year graduates?" | Reddit thread where alumni reflect on their outcomes | https://reddit.com/r/CUNY/comments/1gzmx74 |
+| 10 | College Factual — Graduation/Retention | Graduation rates, time-to-degree, and retention stats with explanations | https://www.collegefactual.com/colleges/cuny-john-jay-college-of-criminal-justice/academic-life/graduation-and-retention/ |
+| 11 | Data USA — John Jay Profile | Demographics, salary outcomes, program breakdown (collected manually — JS-rendered) | https://datausa.io/profile/university/cuny-john-jay-college-of-criminal-justice |
+| 12 | Career Building & Job Search | Career stats, employer connections, notable alumni outcomes | https://www.jjay.cuny.edu/student-life/career-building-job-search |
+| 13 | Federal Work-Study | FAQ on on-campus jobs: who qualifies, how to apply, pay rates | https://www.jjay.cuny.edu/admissions/tuition-financial-aid/federal-work-study |
 
 ---
 
