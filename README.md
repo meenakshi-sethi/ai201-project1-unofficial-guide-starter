@@ -1,15 +1,10 @@
-# The Unofficial Guide — Project 1
-
-> **How to use this template:**
-> Complete each section *after* you've built and tested the corresponding part of your system.
-> Do not write placeholder text — if a section isn't done yet, leave it blank and come back.
-> Every section below is required for submission. One-liners will not receive full credit.
+# The Unofficial Guide: Project 1
 
 ---
 
 ## Domain
 
-Student experience at John Jay College of Criminal Justice (CUNY) — clubs, research opportunities, scholarships, graduation rates, career outcomes, on-campus jobs, and what current and former students actually say about the school. Most of this information is spread across unrelated official pages or buried in Reddit threads, so there's no single place to go if you're a new or prospective student trying to understand what John Jay is really like.
+Student experience at John Jay College of Criminal Justice (CUNY): clubs, research opportunities, scholarships, graduation rates, career outcomes, on-campus jobs, and what current and former students actually say about the school. Most of this information is spread across unrelated official pages or buried in Reddit threads, so there's no single place to go if you're a new or prospective student trying to understand what John Jay is really like.
 
 ---
 
@@ -40,9 +35,9 @@ Student experience at John Jay College of Criminal Justice (CUNY) — clubs, res
 **Overlap:** 50 characters, snapped to the nearest word boundary so no chunk starts mid-word
 
 **Why these choices fit my documents:**
-I skimmed all 13 documents before picking these numbers. Most entries are short — a club description is around 150–250 chars, a FAQ answer is 200–300 chars, a Reddit comment is 150–300 chars. 300 chars fits one entry cleanly without merging unrelated ones. Going smaller would split FAQ pairs mid-answer. Going larger would combine multiple entries into one chunk, which hurts retrieval because the system would return a chunk that's about two different topics at once.
+I skimmed all 13 documents before picking these numbers. Most entries are short. A club description is around 150–250 chars, a FAQ answer is 200–300 chars, a Reddit comment is 150–300 chars. 300 chars fits one entry cleanly without merging unrelated ones. Going smaller would split FAQ pairs mid-answer. Going larger would combine multiple entries into one chunk, which hurts retrieval because the system would return a chunk that's about two different topics at once.
 
-I used recursive character splitting instead of fixed-size. The difference: fixed-size cuts at exactly 300 chars no matter what. Recursive tries paragraph breaks first, then sentence endings, then word boundaries — only falls back to a hard cut if nothing else works. My corpus is mixed (stats pages, FAQ pages, Reddit threads) so I needed something that adapts to each document's structure rather than brute-forcing the same cut everywhere.
+I used recursive character splitting instead of fixed-size. The difference: fixed-size cuts at exactly 300 chars no matter what. Recursive tries paragraph breaks first, then sentence endings, then word boundaries, and only falls back to a hard cut if nothing else works. My corpus is mixed (stats pages, FAQ pages, Reddit threads) so I needed something that adapts to each document's structure rather than brute-forcing the same cut everywhere.
 
 **Final chunk count:** 765 chunks across 13 documents
 
@@ -62,9 +57,9 @@ During Milestone 4 retrieval testing, I ran the same 5 evaluation queries agains
 
 **Which strategy performed better and why:**
 
-300 chars wins overall. Q2 and Q4 both get their best distances at 300. Q1 (enrollment) and Q5 (Reddit) get progressively worse as chunk size increases — larger chunks merge unrelated stats or multiple short Reddit comments into one embedding, which dilutes the semantic signal.
+300 chars wins overall. Q2 and Q4 both get their best distances at 300. Q1 (enrollment) and Q5 (Reddit) get progressively worse as chunk size increases. Larger chunks merge unrelated stats or multiple short Reddit comments into one embedding, which dilutes the semantic signal.
 
-500 chars helps Q3 (FWS eligibility) find the right source document, but the distance is still 0.69 — above the 0.5 threshold and not a meaningful improvement for generation quality.
+500 chars helps Q3 (FWS eligibility) find the right source document, but the distance is still 0.69, which is above the 0.5 threshold and not a meaningful improvement for generation quality.
 
 The one case where larger chunks would clearly help is Q3: the FAQ format splits the eligibility question from the answer across chunk boundaries. A 500-char chunk is more likely to keep them together. But this benefit for one query doesn't outweigh the degradation on Q1 and Q5.
 
@@ -104,7 +99,7 @@ The one case where larger chunks would clearly help is Q3: the FAQ format splits
 | 3 | 0.4616 | `10_college_factual_graduation.txt` | Six Year Graduation Rate 62 out of 100. John Jay Non First-Time / Full-Time Graduation Rate vs. National Average. Six Years 62%... |
 | 4 | 0.4679 | `10_college_factual_graduation.txt` | Six Year Graduation Rate 46 out of 100. First-Time / Full-Time Completions. John Jay Four Years 23%, Six Years 46% |
 
-**Why these chunks are relevant:** All 4 results are from College Factual's graduation page, which is exactly the right source. The top chunk explicitly states "After six years, the John Jay graduation rate was 46%" — a direct answer to the query. Distances are all below 0.5, which means the model found a strong semantic match between the query and the chunk content.
+**Why these chunks are relevant:** All 4 results are from College Factual's graduation page, which is exactly the right source. The top chunk explicitly states "After six years, the John Jay graduation rate was 46%", which is a direct answer to the query. Distances are all below 0.5, which means the model found a strong semantic match between the query and the chunk content.
 
 ---
 
@@ -117,7 +112,7 @@ The one case where larger chunks would clearly help is Q3: the FAQ format splits
 | 3 | 0.7378 | `02_prism_research.txt` | senior who is earning a bachelor's degree in cell and molecular biology. "It's why I came to John Jay and joined PRISM, because I knew it would put me on the path to career success." |
 | 4 | 0.7545 | `03_honors_programs.txt` | Program for Research Initiatives for Science and Math (PRISM) provides an opportunity for forensic science, math and computer science students to engage in scientific research while completing their degree. |
 
-**Why these chunks are relevant:** All 4 results come from the two most relevant sources — the PRISM research page and the honors programs page. Chunk 4 is the program description that directly answers the query. Chunks 1–3 are student testimonials that add context about what PRISM does in practice. The model picked up on "PRISM" and "John Jay" across both sources.
+**Why these chunks are relevant:** All 4 results come from the two most relevant sources: the PRISM research page and the honors programs page. Chunk 4 is the program description that directly answers the query. Chunks 1–3 are student testimonials that add context about what PRISM does in practice. The model picked up on "PRISM" and "John Jay" across both sources.
 
 ---
 
@@ -130,28 +125,22 @@ The one case where larger chunks would clearly help is Q3: the FAQ format splits
 | 3 | 0.8458 | `13_federal_work_study.txt` | eligible for participation in the FWS Program. Entering freshmen will not be eligible to participate in the Federal Work-Study program until the beginning of their entering Fall/Spring semester. |
 | 4 | 0.8605 | `13_federal_work_study.txt` | is awarded on a first-come, first-served basis. John Jay College receives a fixed amount of money each academic year to make FWS awards. |
 
-The top result is off-topic — it comes from the scholarships document, not the FWS FAQ. Chunks 2–4 are from the right source and contain eligibility-related content, but distances above 0.8 indicate the model is not making a strong semantic connection between "who is eligible" and the FAQ-style answer text. This is a retrieval weakness I noted in my evaluation — thin FAQ documents produce few chunks and the dense question-answer format doesn't embed as cleanly as prose.
+The top result is off-topic. It comes from the scholarships document, not the FWS FAQ. Chunks 2–4 are from the right source and contain eligibility-related content, but distances above 0.8 indicate the model is not making a strong semantic connection between "who is eligible" and the FAQ-style answer text. This is a retrieval weakness I noted in my evaluation. Thin FAQ documents produce few chunks and the dense question-answer format doesn't embed as cleanly as prose.
 
 ---
 
 ## Embedding Model
 
-<!-- Name the embedding model you used and explain your choice.
-     Then answer: if you were deploying this system for real users and cost wasn't a constraint,
-     what tradeoffs would you weigh in choosing a different model?
-     Consider: context length limits, multilingual support, accuracy on domain-specific text,
-     latency, and local vs. API-hosted. -->
-
 **Model used:** `all-MiniLM-L6-v2` via sentence-transformers. Runs locally with no API key and no rate limits. Its 256-token context window fits cleanly within the 300-char chunks I'm using, so no truncation happens during embedding.
 
 **Production tradeoff reflection:**
-For a real deployment I'd weigh a few things. First, context length — `all-MiniLM-L6-v2` handles 256 tokens, which is fine for 300-char chunks but would truncate longer documents. `text-embedding-3-large` from OpenAI supports 8,191 tokens, which matters if chunk size ever increases. Second, multilingual support — nearly half of John Jay students are Hispanic and a significant share are first-generation, so queries in Spanish are realistic. `multilingual-e5-large` handles this; `all-MiniLM-L6-v2` does not. Third, accuracy — larger models like `text-embedding-3-large` produce better semantic matches on domain-specific text, which would have helped with the retrieval failures I saw on factual lookup queries (Q1 enrollment) and FAQ-style documents (Q3 FWS). Fourth, latency and cost — API-hosted models add network round-trips and per-token costs that matter at scale. For this project, local and free was the right call. For production with real users, I'd test `text-embedding-3-large` first and fall back to a local model only if cost became a constraint.
+For a real deployment I'd weigh a few things. First, context length. `all-MiniLM-L6-v2` handles 256 tokens, which is fine for 300-char chunks but would truncate longer documents. `text-embedding-3-large` from OpenAI supports 8,191 tokens, which matters if chunk size ever increases. Second, multilingual support. Nearly half of John Jay students are Hispanic and a significant share are first-generation, so queries in Spanish are realistic. `multilingual-e5-large` handles this; `all-MiniLM-L6-v2` does not. Third, accuracy. Larger models like `text-embedding-3-large` produce better semantic matches on domain-specific text, which would have helped with the retrieval failures I saw on factual lookup queries (Q1 enrollment) and FAQ-style documents (Q3 FWS). Fourth, latency and cost. API-hosted models add network round-trips and per-token costs that matter at scale. For this project, local and free was the right call. For production with real users, I'd test `text-embedding-3-large` first and fall back to a local model only if cost became a constraint.
 
 ---
 
 ## Metadata Filtering
 
-The `retrieve()` function accepts an optional `source_filter` parameter — a list of source filenames to restrict results to. Two presets are defined in `embed.py`: `REDDIT_SOURCES` (the 4 Reddit thread files) and `OFFICIAL_SOURCES` (the 9 official/third-party files).
+The `retrieve()` function accepts an optional `source_filter` parameter, which is a list of source filenames to restrict results to. Two presets are defined in `embed.py`: `REDDIT_SOURCES` (the 4 Reddit thread files) and `OFFICIAL_SOURCES` (the 9 official/third-party files).
 
 **Query:** "What do students think about John Jay College?"
 
@@ -179,97 +168,146 @@ The `retrieve()` function accepts an optional `source_filter` parameter — a li
 | 0.6007 | `02_prism_research.txt` | I initially wanted to work in law enforcement, so John Jay was always on my radar... |
 | 0.6673 | `02_prism_research.txt` | Queensborough Community College before transferring to John Jay through the CUNY Justice Academy |
 
-The filter has a visible effect — Reddit-only returns raw student opinions from Reddit threads, while official-only returns institutional content and student testimonials from the PRISM page. A user who wants unfiltered student sentiment gets Reddit chunks; a user who wants verified institutional information gets official source chunks.
+The filter has a visible effect. Reddit-only returns raw student opinions from Reddit threads, while official-only returns institutional content and student testimonials from the PRISM page. A user who wants unfiltered student sentiment gets Reddit chunks; a user who wants verified institutional information gets official source chunks.
 
 ---
 
 ## Grounded Generation
 
-<!-- Explain how your system enforces grounding — how does it prevent the LLM from answering
-     beyond the retrieved documents?
-     Describe both your system prompt (what instruction you gave the model) and any structural
-     choices (e.g., how you formatted the context, whether you filtered low-relevance chunks).
-     Do not just say "I told it to use the documents" — show the actual instruction or explain
-     the mechanism. -->
+**How grounding is enforced:**
 
-**System prompt grounding instruction:**
+The system prompt in `generate.py` tells the model to use only what's in the retrieved context and nothing else. The key line is:
 
-**How source attribution is surfaced in the response:**
+> "Answer the question using ONLY the information provided in the context below. Do not use any outside knowledge or make anything up. If the context does not contain enough information to answer the question, respond with exactly: 'I don't have enough information in my sources to answer that question.'"
+
+I capitalized ONLY so there's no ambiguity, and gave the refusal phrase word-for-word so the model doesn't water it down. The sources shown in the UI come from the pipeline code, not from the model. After the model answers, `generate.py` collects the source filenames and URLs from the retrieved chunks and returns them separately. The model never writes the source list itself.
+
+**Example response 1 — graduation rate:**
+
+> "The 6-year graduation rate at John Jay is 46%."
+
+Retrieved from: `10_college_factual_graduation.txt`: https://www.collegefactual.com/colleges/cuny-john-jay-college-of-criminal-justice/academic-life/graduation-and-retention/
+
+**Example response 2 — PRISM program:**
+
+> "The PRISM program at John Jay is the Program for Research Initiatives for Science and Math, which provides an opportunity for forensic science, math, and computer science students to engage in scientific research while completing their degree."
+
+Retrieved from: `02_prism_research.txt`, `03_honors_programs.txt`
+
+**Out-of-scope refusal:**
+
+Query: "What is the weather like on Mars?"
+
+> "I don't have enough information in my sources to answer that question."
+
+Nothing in the retrieved chunks is about Mars, so the model refuses instead of making something up.
+
+---
+
+## Query Interface
+
+The UI runs with `python app.py` and opens at `http://localhost:7860`. It's built with Gradio.
+
+**Input:** One text box where you type your question. Hit Enter or click Ask.
+
+**Output:**
+- **Answer**: what Groq's `llama-3.3-70b-versatile` generated from the retrieved chunks
+- **Retrieved from**: the source files and URLs the answer came from
+
+The page also has a short description of what the guide covers and a list of example questions, so someone opening it for the first time knows what to ask without needing to read any documentation.
+
+**Sample interaction:**
+
+> **Question:** What is the 6-year graduation rate at John Jay?
+>
+> **Answer:** The 6-year graduation rate at John Jay is 46%.
+>
+> **Retrieved from:**
+> • 10_college_factual_graduation.txt: https://www.collegefactual.com/colleges/cuny-john-jay-college-of-criminal-justice/academic-life/graduation-and-retention/
 
 ---
 
 ## Evaluation Report
 
-<!-- Run your 5 test questions from planning.md through your system and record the results.
-     Be honest — a partially accurate or inaccurate result that you explain well is more
-     valuable than a suspiciously perfect result. -->
-
 | # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
 |---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | What is the total student enrollment at John Jay College as of Fall 2023? | 13,465 total (11,656 undergrad, 1,809 grad) — Quick Facts 2023 | "I don't have enough information in my sources to answer that question." | Off-target — top 4 chunks from scholarships and College Factual, not Quick Facts | Inaccurate |
+| 2 | What is the 6-year graduation rate at John Jay? | 55.5% (Quick Facts) / 46% (College Factual full-time) | "The 6-year graduation rate at John Jay is 46%." | Relevant — all 4 chunks from College Factual graduation page | Partially accurate — correct for full-time students, but Quick Facts reports 55.5% overall |
+| 3 | Who is eligible for the Federal Work-Study program at John Jay? | US citizen or eligible non-citizen, must complete FAFSA and check FWS box, first-come first-served. Entering freshmen not eligible until first semester begins | "Entering freshmen are not eligible until the beginning of their entering Fall/Spring semester, but other students are eligible." | Partially relevant — 1 of 4 chunks from correct FWS doc, 1 from scholarships | Partially accurate — captures freshmen exclusion but misses FAFSA requirement and citizenship criteria |
+| 4 | What is the PRISM program at John Jay? | STEM undergrad research program, 800+ participants, includes Transfer Together Program | "PRISM is the Program for Research Initiatives for Science and Math, providing forensic science, math, and computer science students opportunities to engage in scientific research while completing their degree." | Relevant — chunks from PRISM and honors pages | Partially accurate — correct definition, missing 800+ participants and Transfer Together Program details |
+| 5 | What do Reddit users say about transferring to John Jay? | Transfer students mention transferring from CUNY community colleges, ASAP program, student-run Discord | "I don't have enough information in my sources to answer that question." | Off-target — top chunk from PRISM, not Reddit transfer threads | Inaccurate |
 
-**Retrieval quality:** Relevant / Partially relevant / Off-target  
+**Retrieval quality:** Relevant / Partially relevant / Off-target
 **Response accuracy:** Accurate / Partially accurate / Inaccurate
 
 ---
 
 ## Failure Case Analysis
 
-<!-- Identify at least one question where retrieval or generation did not work as expected.
-     Write a specific explanation of *why* it failed, tied to a part of the pipeline.
+### Failure 1 — Enrollment number not found
 
-     "The answer was wrong" is not an explanation.
+**Question:** "What is the total student enrollment at John Jay College as of Fall 2023?"
 
-     "The relevant information was split across a chunk boundary, so retrieval returned
-     only half the context — the model didn't have enough to answer correctly" is an explanation.
+**System returned:** "I don't have enough information in my sources to answer that question."
 
-     "The embedding model treated the professor's nickname as out-of-vocabulary and returned
-     results from an unrelated review" is an explanation. -->
+The answer (13,465 students) is in `05_quick_facts_2023.txt` but retrieval never surfaced it. The right chunk ranked 9th, not in the top 4.
 
-**Question that failed:**
+**Why it failed (retrieval stage):** The Quick Facts PDF is one dense page of bullet stats with no sentences, just numbers and labels. At 300 chars per chunk, you get things like "13,465. 11,656 Total Undergraduates. 1,809 Total Graduates." The embedding model needs surrounding words to understand meaning, and there aren't any here. The query "total student enrollment" has a clear meaning, but the chunk it needs to match is mostly numbers so the model doesn't connect them. Distance was 0.60, outside the retrieval window.
 
-**What the system returned:**
+**Fix:** Hybrid search. BM25 keyword matching would find "student enrollment: 13,465" by exact words regardless of what the embedding thinks.
 
-**Root cause (tied to a specific pipeline stage):**
+---
 
-**What you would change to fix it:**
+### Failure 2 — FWS eligibility answer is incomplete
+
+**Question:** "Who is eligible for the Federal Work-Study program at John Jay?"
+
+**System returned:** "Entering freshmen are not eligible until the beginning of their entering Fall/Spring semester, but other students are eligible."
+
+That's only one part of the answer. The full criteria (US citizen or eligible non-citizen, complete FAFSA, awards are first-come first-served) never showed up.
+
+**Why it failed (chunking stage):** The FWS document is a 20+ question FAQ. Each Q and its A are short enough that the 300-char chunker often puts the question in one chunk and the answer in the next. When I ask "who is eligible," retrieval finds chunks that match the question phrasing, not the answer phrasing. The eligibility criteria chunk ("Be a US citizen or eligible non-citizen…") is in the document but it didn't score high enough to make the top 4 because it doesn't sound much like the question. Distances ranged 0.76–0.86, which is weak.
+
+**Fix:** Keep each FAQ Q+A pair as one unit instead of letting the chunker split them. Parent document retrieval or a document-aware chunker would handle this.
+
+---
+
+### Failure 3 — "Earn" vs "wage" — same meaning, different words
+
+**Question:** "How much can students earn under the Federal Work-Study program?"
+
+**System returned:** "I don't have enough information in my sources to answer that question."
+
+The answer is right there in the document: "hourly wage can range from minimum wage to $17.00 per hour." When I rephrased the question to "What are the hourly wages under Federal Work-Study?" it answered correctly.
+
+**Why it failed (retrieval stage):** The word "earn" in my query and the word "wage" in the document mean the same thing, but the embedding model placed them far enough apart in vector space that the right chunk didn't make the top 4. The model instead found chunks about FWS award earning limits, which use "earn" in a different sense. This is the core limitation of pure semantic search. Word choice matters more than it should.
+
+**Fix:** Hybrid search. BM25 would find "earn" and "wage" appearing together in the same sentence regardless of how the embedding model treats them as concepts.
 
 ---
 
 ## Spec Reflection
 
-<!-- Reflect on how planning.md shaped your implementation.
-     Answer both questions with at least 2–3 sentences each. -->
+**One way the spec helped:**
 
-**One way the spec helped you during implementation:**
+Writing `planning.md` before any code forced me to actually read through all 13 documents and think about their structure. That's how I landed on 300 chars. I noticed most entries (club descriptions, FAQ answers, Reddit comments) run 150–300 chars, so one chunk per entry made sense. When I ran the chunker and found 101 chunks over 300 chars, I had something concrete to fix toward. Without a written target I might not have caught that at all and moved on thinking the chunker was fine.
 
-**One way your implementation diverged from the spec, and why:**
+**One way it diverged:**
+
+I planned to use an in-memory ChromaDB client. Once the full app was running, restarting it meant re-embedding all 765 chunks every time, about 10 seconds. I switched to `chromadb.PersistentClient()` so the index saves to disk and loads in under 2 seconds on subsequent runs. That wasn't in the original plan; it only became obvious once I was actually using the app and restarting it repeatedly while testing.
 
 ---
 
 ## AI Usage
 
-<!-- Describe at least 2 specific instances where you used an AI tool during this project.
-     For each: what did you give the AI as input, what did it produce, and what did you
-     change, override, or direct differently?
+**Instance 1 — Ingestion and chunking pipeline**
 
-     "I used Claude to help me code" is not sufficient.
-     "I gave Claude my Chunking Strategy section from planning.md and asked it to implement
-     chunk_text(). It returned a function using a fixed character split. I overrode the
-     chunk size from 500 to 200 because my documents are short reviews, not long guides." -->
+- *What I gave the AI:* The Chunking Strategy section from `planning.md` with chunk size 300, overlap 50, recursive character splitting, and a description of the 13 document types.
+- *What it produced:* `ingest.py` with `load_documents`, `clean_text`, and `_recursive_split`. The structure was right but had two bugs. When overlap text combined with a new part exceeded 300 chars it silently saved the oversized result as `current`, and the last chunk in the loop was appended without a size check.
+- *What I changed or overrode:* I ran the chunker, counted the output, and found 101 of 767 chunks were over 300 chars (max was 1,132). I pointed Claude to both bugs specifically and directed the fixes: check `len(overlap + part) <= chunk_size` before setting `current`, and re-split if the final chunk is oversized. I also added "Image" to the boilerplate skip list after spotting standalone "Image" chunks coming from `<img alt="Image">` tags in scraped pages.
 
-**Instance 1**
+**Instance 2 — Generation and Gradio UI**
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
-
-**Instance 2**
-
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+- *What I gave the AI:* The architecture diagram from `planning.md`, the grounding requirement (answer only from retrieved context, include source attribution), and the Gradio skeleton from the project instructions.
+- *What it produced:* `generate.py`, `query.py` as an end-to-end wrapper, and `app.py`. The system prompt said "try to answer only from the documents," which is too soft and easy to ignore.
+- *What I changed or overrode:* I changed "try to answer only" to "Answer using ONLY" and added the exact refusal phrase word-for-word so the model doesn't soften it on its own. I also directed the switch from in-memory ChromaDB to `PersistentClient` after noticing the app re-embedded all 765 chunks on every restart. I tested the out-of-scope refusal with "What is the weather like on Mars?" before calling the milestone done.

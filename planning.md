@@ -114,7 +114,7 @@ documents/ (.txt files)
         |
         v
 [ Retrieval ]
-  ChromaDB similarity search — top-k 3
+  ChromaDB similarity search — top-k 4
         |
         v
 [ Generation ]
