@@ -5,30 +5,35 @@ from ingest import load_documents, chunk_documents
 
 COLLECTION_NAME = "jjay_guide"
 MODEL_NAME = "all-MiniLM-L6-v2"
+CHROMA_DIR = "./chroma_db"
 
 
 def build_collection(chunks):
-    """Embed all chunks and store them in a ChromaDB collection.
+    """Embed all chunks and store them in a persistent ChromaDB collection.
 
-    Clears any existing collection with the same name before loading,
-    so re-running always produces a fresh index.
+    On the first run, embeds all chunks and saves to disk (CHROMA_DIR).
+    On subsequent runs, loads the existing collection from disk — no re-embedding.
+    To force a rebuild, delete the chroma_db/ directory.
 
     Args:
         chunks: list of dicts from chunk_documents() — keys: text, source, source_url, chunk_index.
 
     Returns:
-        The ChromaDB collection.
+        Tuple of (ChromaDB collection, SentenceTransformer model).
     """
     model = SentenceTransformer(MODEL_NAME)
-    client = chromadb.Client()
+    client = chromadb.PersistentClient(path=CHROMA_DIR)
 
-    # drop and recreate so re-runs don't duplicate
-    try:
+    existing = [c.name for c in client.list_collections()]
+    if COLLECTION_NAME in existing:
+        collection = client.get_collection(COLLECTION_NAME)
+        if collection.count() == len(chunks):
+            print(f"Loaded existing ChromaDB collection ({collection.count()} chunks).\n")
+            return collection, model
+        # chunk count changed — rebuild
         client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass
-    collection = client.create_collection(COLLECTION_NAME)
 
+    collection = client.create_collection(COLLECTION_NAME)
     texts = [c["text"] for c in chunks]
     ids = [f"{c['source']}__chunk{c['chunk_index']}" for c in chunks]
     metadatas = [

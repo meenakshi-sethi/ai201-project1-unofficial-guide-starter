@@ -52,11 +52,25 @@ This is standard in production RAG — LangChain's `RecursiveCharacterTextSplitt
 
 ---
 
+## Milestone 5 — Vocabulary Mismatch in Retrieval
+
+Discovered during Milestone 5 testing: the query **"how much can students earn under the Federal Work-Study program?"** returned "I don't have enough information" even though the answer ("hourly wage can range from minimum wage to $17.00 per hour") exists in `13_federal_work_study.txt`.
+
+The same query rephrased as **"what are hourly wages under the Federal Work-Study program?"** returned the correct answer immediately.
+
+**Root cause — vocabulary mismatch:** The word "earn" and the word "wage" are synonyms to a human but embed to slightly different vector positions. The document text uses "wage" literally; the query used "earn," which the model associated with nearby chunks about award limits and earning caps rather than the pay rate chunk. This is a semantic search limitation — it handles concept-level meaning well but can still fail on synonym variation when one word is dominant in the source text.
+
+**Why the refusal is correct:** The system said "I don't have enough information" rather than guessing a number from training data. That is grounding working as intended — refusing to hallucinate is the right behavior even when it means an incomplete answer.
+
+**Fix:** Hybrid search (BM25 + semantic) would solve this — keyword matching finds "earn" and "wage" co-occurring in the same sentence regardless of embedding distance. Logged as post-submission enhancement.
+
+---
+
 ## Further Enhancements (Post-Submission)
 
-Three retrieval failures were identified during Milestone 4 testing. The fixes are either stretch goals or advanced techniques — keeping them here for after submission:
+Four retrieval failures were identified across Milestone 4 and 5 testing. The fixes are either stretch goals or advanced techniques — keeping them here for after submission:
 
-- **Hybrid Search (BM25 + semantic)** — would fix Query 1 (enrollment). Keyword matching finds "total student enrollment: 13,465" instantly where semantic search fails on dense stat chunks. This is the +2pt stretch goal in the grading rubric.
+- **Hybrid Search (BM25 + semantic)** — would fix Query 1 (enrollment) and the vocabulary mismatch case above. Keyword matching finds exact terms instantly where semantic search fails on dense stat chunks or synonym variation. This is the +2pt stretch goal in the grading rubric.
 - **Parent document retrieval** — would fix Query 3 (FWS eligibility). Keeps Q+A pairs together by retrieving the parent chunk when a child chunk matches, so the eligibility question and criteria stay in the same context.
 - **Query decomposition** — would fix Query 5 (Reddit transfer). Breaks "what do Reddit users say about transferring" into focused sub-queries like "transfer experience John Jay" that match individual comment chunks better.
 
