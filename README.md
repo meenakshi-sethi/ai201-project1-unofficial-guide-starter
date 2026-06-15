@@ -21,7 +21,7 @@ Student experience at John Jay College of Criminal Justice (CUNY) — clubs, res
 | 2 | PRISM Research Program | Official | https://www.jjay.cuny.edu/research/student-research/program-research-initiatives-science-math |
 | 3 | Honors & Achievement Programs | Official | https://www.jjay.cuny.edu/academics/undergraduate-programs/honors-achievement-programs |
 | 4 | Research & Creativity Scholarships | Official | https://www.jjay.cuny.edu/research/student-research/office-student-research-creativity/research-creativity-scholarships/undergraduategraduate-researchcreativity-assistant-scholarship |
-| 5 | Quick Facts 2023 PDF | Official | `documents/05_quick_facts_2023.txt` |
+| 5 | Quick Facts 2023 PDF | Official | https://www.jjay.cuny.edu/sites/default/files/2024-05/QUICK%20FACTS%202023.pdf |
 | 6 | r/CUNY — "Is John Jay a good school?" | Reddit | https://reddit.com/r/CUNY/comments/1gwtc86 |
 | 7 | r/CUNY — "First Semester At John Jay" | Reddit | https://reddit.com/r/CUNY/comments/kj7zc4 |
 | 8 | r/CUNY — "First day tomorrow..." | Reddit | https://reddit.com/r/CUNY/comments/1f2r9wf |
