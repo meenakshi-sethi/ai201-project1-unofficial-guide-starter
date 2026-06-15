@@ -184,7 +184,7 @@ I capitalized ONLY so there's no ambiguity, and gave the refusal phrase word-for
 
 **Example response 1 — graduation rate:**
 
-> "The 6-year graduation rate at John Jay is 46%."
+> "The 6-year graduation rate at John Jay is 46% for first-time, full-time students, and 52% overall."
 
 Retrieved from: `10_college_factual_graduation.txt`: https://www.collegefactual.com/colleges/cuny-john-jay-college-of-criminal-justice/academic-life/graduation-and-retention/
 
@@ -220,7 +220,7 @@ The page also has a short description of what the guide covers and a list of exa
 
 > **Question:** What is the 6-year graduation rate at John Jay?
 >
-> **Answer:** The 6-year graduation rate at John Jay is 46%.
+> **Answer:** The 6-year graduation rate at John Jay is 46% for first-time, full-time students, and 52% overall.
 >
 > **Retrieved from:**
 > • 10_college_factual_graduation.txt: https://www.collegefactual.com/colleges/cuny-john-jay-college-of-criminal-justice/academic-life/graduation-and-retention/
@@ -229,16 +229,64 @@ The page also has a short description of what the guide covers and a list of exa
 
 ## Evaluation Report
 
-| # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
-|---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | What is the total student enrollment at John Jay College as of Fall 2023? | 13,465 total (11,656 undergrad, 1,809 grad) — Quick Facts 2023 | "I don't have enough information in my sources to answer that question." | Off-target — top 4 chunks from scholarships and College Factual, not Quick Facts | Inaccurate |
-| 2 | What is the 6-year graduation rate at John Jay? | 55.5% (Quick Facts) / 46% (College Factual full-time) | "The 6-year graduation rate at John Jay is 46%." | Relevant — all 4 chunks from College Factual graduation page | Partially accurate — correct for full-time students, but Quick Facts reports 55.5% overall |
-| 3 | Who is eligible for the Federal Work-Study program at John Jay? | US citizen or eligible non-citizen, must complete FAFSA and check FWS box, first-come first-served. Entering freshmen not eligible until first semester begins | "Entering freshmen are not eligible until the beginning of their entering Fall/Spring semester, but other students are eligible." | Partially relevant — 1 of 4 chunks from correct FWS doc, 1 from scholarships | Partially accurate — captures freshmen exclusion but misses FAFSA requirement and citizenship criteria |
-| 4 | What is the PRISM program at John Jay? | STEM undergrad research program, 800+ participants, includes Transfer Together Program | "PRISM is the Program for Research Initiatives for Science and Math, providing forensic science, math, and computer science students opportunities to engage in scientific research while completing their degree." | Relevant — chunks from PRISM and honors pages | Partially accurate — correct definition, missing 800+ participants and Transfer Together Program details |
-| 5 | What do Reddit users say about transferring to John Jay? | Transfer students mention transferring from CUNY community colleges, ASAP program, student-run Discord | "I don't have enough information in my sources to answer that question." | Off-target — top chunk from PRISM, not Reddit transfer threads | Inaccurate |
+---
 
-**Retrieval quality:** Relevant / Partially relevant / Off-target
-**Response accuracy:** Accurate / Partially accurate / Inaccurate
+### Q1 — What is the total student enrollment at John Jay College as of Fall 2023?
+
+| | |
+|---|---|
+| **Expected** | 13,465 total students (11,656 undergraduates, 1,809 graduates) — from Quick Facts 2023 PDF |
+| **System returned** | "I don't have enough information in my sources to answer that question." |
+| **Retrieval quality** | Off-target — top 4 chunks came from scholarships and College Factual, not Quick Facts. The correct chunk ranked 9th, outside the retrieval window |
+| **Accuracy** | ❌ Inaccurate |
+
+---
+
+### Q2 — What is the 6-year graduation rate at John Jay?
+
+| | |
+|---|---|
+| **Expected** | 46% for first-time, full-time students and 52% overall — from College Factual graduation page. (Note: Quick Facts 2023 reports 55.5% for the Fall 2017 cohort and Data USA reports 54%–55.8%; differences are due to varying methodology and cohort year. The system retrieves College Factual, so its figures are the correct reference for grading.) |
+| **System returned** | "The 6-year graduation rate at John Jay is 46% for first-time, full-time students, and 52% overall." |
+| **Retrieval quality** | Relevant — all 4 chunks from College Factual graduation page, all distances below 0.5 (top chunk: 0.39) |
+| **Accuracy** | ✅ Accurate — answer matches the retrieved source with the correct figures for that source |
+
+---
+
+### Q3 — Who is eligible for the Federal Work-Study program at John Jay?
+
+| | |
+|---|---|
+| **Expected** | Must be a US citizen or eligible non-citizen, complete the FAFSA and check the FWS box, awarded first-come first-served. International students and entering freshmen (until their first semester begins) are not eligible |
+| **System returned** | "Entering freshmen are not eligible until the beginning of their entering Fall/Spring semester, but other students are eligible." |
+| **Retrieval quality** | Partially relevant — 1 of 4 chunks from the correct FWS document, 1 from scholarships; distances ranged 0.76–0.86 |
+| **Accuracy** | ⚠️ Partially accurate — captures the freshmen exclusion but misses the FAFSA requirement, citizenship criteria, and first-come first-served detail |
+
+---
+
+### Q4 — What is the PRISM program at John Jay?
+
+| | |
+|---|---|
+| **Expected** | PRISM is a STEM undergraduate research program. Over 800 undergrads have participated. It includes a Transfer Together Program for students transferring from CUNY community colleges |
+| **System returned** | "PRISM is the Program for Research Initiatives for Science and Math, providing forensic science, math, and computer science students opportunities to engage in scientific research while completing their degree." |
+| **Retrieval quality** | Relevant — chunks from PRISM page and honors programs page (top distance: 0.51), but retrieval surfaced student testimonial chunks instead of the program stats chunks |
+| **Accuracy** | ⚠️ Partially accurate — correct definition and field, but missing the 800+ participants figure and the Transfer Together Program |
+
+---
+
+### Q5 — What do Reddit users say about transferring to John Jay?
+
+| | |
+|---|---|
+| **Expected** | Transfer students mention transferring from CUNY community colleges (BCC, BMCC), using the ASAP program, and a student-run Discord with 100+ transfer and freshman students — from Reddit threads 06, 07, 08 |
+| **System returned** | "I don't have enough information in my sources to answer that question." |
+| **Retrieval quality** | Off-target — top chunk came from the PRISM page, not the Reddit transfer threads. The right chunks never made it into the top 4 |
+| **Accuracy** | ❌ Inaccurate |
+
+---
+
+**Summary:** 1 accurate (Q2), 2 partially accurate (Q3, Q4), 2 inaccurate (Q1, Q5)
 
 ---
 
